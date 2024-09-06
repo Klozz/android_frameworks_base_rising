@@ -445,32 +445,39 @@ public class QsControlsView extends FrameLayout {
     }
 
     private class ProcessArtworkTask extends AsyncTask<Bitmap, Void, Bitmap> {
-        protected Bitmap doInBackground(Bitmap... bitmaps) {
+       protected Bitmap doInBackground(Bitmap... bitmaps) {
             Bitmap bitmap = bitmaps[0];
             if (bitmap == null || bitmap.isRecycled()) {
                 return null;
             }
+
             int width = mMediaAlbumArtBg.getWidth();
             int height = mMediaAlbumArtBg.getHeight();
             return getScaledRoundedBitmap(bitmap, width, height);
-        }
+         }
+
         protected void onPostExecute(Bitmap result) {
             if (result == null) return;
-            if (mAlbumArtRef == null || mAlbumArtRef.get() != result) {
-                if (mAlbumArtRef != null) {
-                    Bitmap previousBitmap = mAlbumArtRef.get();
-                    if (previousBitmap != null && !previousBitmap.isRecycled()) {
-                        previousBitmap.recycle();
-                    }
+
+            // Recycle the old album art if it exists
+            if (mAlbumArtRef != null) {
+                Bitmap previousBitmap = mAlbumArtRef.get();
+                if (previousBitmap != null && !previousBitmap.isRecycled()) {
+                    previousBitmap.recycle();
                 }
-                mAlbumArtRef = new WeakReference<>(result);
-                final int mediaFadeLevel = mContext.getResources().getInteger(R.integer.media_player_fade);
-                final int fadeFilter = ColorUtils.blendARGB(Color.TRANSPARENT, mNotifManager == null ? Color.BLACK : mNotifManager.getMediaBgColor(), mediaFadeLevel / 100f);
-                mMediaAlbumArtBg.setColorFilter(fadeFilter, PorterDuff.Mode.SRC_ATOP);
-                mMediaAlbumArtBg.setImageBitmap(mAlbumArtRef.get());
             }
+
+            // Assign the new album art to the weak reference
+            mAlbumArtRef = new WeakReference<>(result);
+
+            // Set the album art on the ImageView
+            final int mediaFadeLevel = mContext.getResources().getInteger(R.integer.media_player_fade);
+            final int fadeFilter = ColorUtils.blendARGB(Color.TRANSPARENT, mNotifManager == null ? Color.BLACK : mNotifManager.getMediaBgColor(), mediaFadeLevel / 100f);
+            mMediaAlbumArtBg.setColorFilter(fadeFilter, PorterDuff.Mode.SRC_ATOP);
+            mMediaAlbumArtBg.setImageBitmap(mAlbumArtRef.get());
         }
     }
+
 
     private Bitmap getScaledRoundedBitmap(Bitmap bitmap, int width, int height) {
         if (bitmap == null || bitmap.isRecycled() || width <= 0 || height <= 0) {
